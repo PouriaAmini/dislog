@@ -1,3 +1,6 @@
+// Package loadbalance provides custom implementations of a resolver and a
+// balancer for gRPC clients to connect to distributed
+// systems that require special load balancing algorithms.
 package loadbalance
 
 import (
@@ -14,16 +17,26 @@ import (
 	api "github.com/pouriaamini/proglog/api/v1"
 )
 
+// Resolver implements the resolver.Resolver interface.
+// It resolves the service endpoint addresses and their attributes (
+// isLeader, for example) using the get_servers RPC of a proglog server.
 type Resolver struct {
-	mu            sync.Mutex
-	clientConn    resolver.ClientConn
-	resolverConn  *grpc.ClientConn
+	// A mutex to synchronize access to the resolver's internal state
+	mu sync.Mutex
+	// The clientConn to update with the resolved service
+	clientConn resolver.ClientConn
+	// The underlying gRPC client connection to the proglog
+	resolverConn *grpc.ClientConn
+	// The parsed service configuration
 	serviceConfig *serviceconfig.ParseResult
-	logger        *zap.Logger
+	// A logger instance
+	logger *zap.Logger
 }
 
 var _ resolver.Builder = (*Resolver)(nil)
 
+// Build builds and returns a new Resolver struct for the given target,
+// clientConn, and resolver.BuildOptions.
 func (r *Resolver) Build(
 	target resolver.Target,
 	cc resolver.ClientConn,
@@ -50,18 +63,23 @@ func (r *Resolver) Build(
 	return r, nil
 }
 
-const Name = "dislog"
+// Name is the name of the proglog load balancing mechanism.
+const Name = "proglog"
 
+// Scheme returns the name of the load balancing scheme.
 func (r *Resolver) Scheme() string {
 	return Name
 }
 
+// init registers the Resolver with the grpc resolver module.
 func init() {
 	resolver.Register(&Resolver{})
 }
 
 var _ resolver.Resolver = (*Resolver)(nil)
 
+// ResolveNow resolves the addresses of the endpoints and their attributes
+// using the get_servers RPC of the proglog server.
 func (r *Resolver) ResolveNow(resolver.ResolveNowOptions) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -92,6 +110,7 @@ func (r *Resolver) ResolveNow(resolver.ResolveNowOptions) {
 	})
 }
 
+// Close closes the connection to the proglog server.
 func (r *Resolver) Close() {
 	if err := r.resolverConn.Close(); err != nil {
 		r.logger.Error(
