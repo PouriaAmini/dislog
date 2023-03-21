@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "dislog.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "disglog.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels: {{ include "disglog.selectorLabels" . | nindent 6 }}
+  serviceName: {{ include "disglog.fullname" . }}
+  replicas: {{ .Values.replicas }}
+  template:
+    metadata:
+      name: {{ include "disglog.fullname" . }}
+      labels: {{ include "disglog.labels" . | nindent 8 }}
+    spec:
+      initContainers:
+        - name: {{ include "disglog.fullname" . }}-config-init
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |-
+              ID=$(echo $HOSTNAME | rev | cut -d- -f1 | rev)
+              cat > /var/run/disglog/config.yaml <<EOD
+              data-dir: /var/run/disglog/data
+              rpc-port: {{.Values.rpcPort}}
+              bind-addr: "$HOSTNAME.disglog.{{.Release.Namespace}}.\svc.cluster.local:{{.Values.serfPort}}"
+              bootstrap: $([ $ID = 0 ] && echo true || echo false)
+              $([ $ID != 0 ] && echo 'start-join-addrs: "disglog-0.disglog.{{.Release.Namespace}}.svc.cluster.local:{{.Values.serfPort}}"')
+              EOD   
+          volumeMounts:
+            - name: datadir
+              mountPath: /var/run/disglog
+      containers:
+        - name: {{ include "disglog.fullname" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.rpcPort }}
+              name: rpc
+            - containerPort: {{ .Values.serfPort }}
+              name: serf
+          args:
+            - --config-file=/var/run/disglog/config.yaml
+          volumeMounts:
+            - name: datadir
+              mountPath: /var/run/disglog
+  volumeClaimTemplates:
+    - metadata:
+        name: datadir
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: {{ .Values.storage }}
