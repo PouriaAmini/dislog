@@ -1,3 +1,6 @@
+// Package agent implements the Proglog agent. It provides a distributed log
+// service using the Raft consensus algorithm for log replication and a
+// gRPC-based API for clients to interact with the distributed log.
 package agent
 
 import (
@@ -21,6 +24,10 @@ import (
 	"github.com/pouriaamini/proglog/internal/server"
 )
 
+// Agent is a struct that implements the Proglog agent.
+// It provides a distributed log service using the Raft consensus algorithm
+// for log replication and a gRPC-based API for clients to interact with the
+// distributed log.
 type Agent struct {
 	Config Config
 
@@ -34,19 +41,31 @@ type Agent struct {
 	shutdownLock sync.Mutex
 }
 
+// Config is a struct that represents the configuration options for the agent.
 type Config struct {
+	// ServerTLSConfig is the server's TLS configuration.
 	ServerTLSConfig *tls.Config
-	PeerTLSConfig   *tls.Config
-	DataDir         string
-	BindAddr        string
-	RPCPort         int
-	NodeName        string
-	StartJoinAddrs  []string
-	ACLModelFile    string
-	ACLPolicyFile   string
-	Bootstrap       bool
+	// PeerTLSConfig is the peer's TLS configuration.
+	PeerTLSConfig *tls.Config
+	// DataDir is the directory where the log data will be stored.
+	DataDir string
+	// BindAddr is the address the server will listen on.
+	BindAddr string
+	// RPCPort is the port the server will listen on.
+	RPCPort int
+	// NodeName is the unique identifier for the node.
+	NodeName string
+	// StartJoinAddrs is the initial list of nodes to join.
+	StartJoinAddrs []string
+	// ACLModelFile is the path to the model file for ACL.
+	ACLModelFile string
+	// ACLPolicyFile is the path to the policy file for ACL.
+	ACLPolicyFile string
+	// Bootstrap is a flag to bootstrap the Raft cluster.
+	Bootstrap bool
 }
 
+// RPCAddr returns the address of the RPC endpoint.
 func (c Config) RPCAddr() (string, error) {
 	host, _, err := net.SplitHostPort(c.BindAddr)
 	if err != nil {
@@ -55,6 +74,7 @@ func (c Config) RPCAddr() (string, error) {
 	return fmt.Sprintf("%s:%d", host, c.RPCPort), nil
 }
 
+// New creates a new instance of the agent with the given configuration.
 func New(config Config) (*Agent, error) {
 	a := &Agent{
 		Config:    config,
@@ -76,6 +96,7 @@ func New(config Config) (*Agent, error) {
 	return a, nil
 }
 
+// setupLogger sets up the logger for the agent.
 func (a *Agent) setupLogger() error {
 	logger, err := zap.NewDevelopment()
 	if err != nil {
@@ -85,6 +106,7 @@ func (a *Agent) setupLogger() error {
 	return nil
 }
 
+// setupMux sets up the multiplexer for the agent.
 func (a *Agent) setupMux() error {
 	rpcAddr := fmt.Sprintf(
 		":%d",
@@ -98,6 +120,10 @@ func (a *Agent) setupMux() error {
 	return nil
 }
 
+// setupLog function sets up the logging configuration for the agent by
+// creating a new instance of distributed log and initializing it with the
+// agent's configuration. It also waits for a leader if bootstrap is set to
+// true in the configuration.
 func (a *Agent) setupLog() error {
 	raftLn := a.mux.Match(func(reader io.Reader) bool {
 		b := make([]byte, 1)
@@ -128,6 +154,9 @@ func (a *Agent) setupLog() error {
 	return err
 }
 
+// setupServer function sets up the gRPC server for the agent by creating a
+// new instance of gRPC server and initializing it with the agent's
+// configuration.
 func (a *Agent) setupServer() error {
 	authorizer := auth.New(
 		a.Config.ACLModelFile,
@@ -157,6 +186,9 @@ func (a *Agent) setupServer() error {
 	return err
 }
 
+// setupMembership function sets up the membership for the agent by creating
+// a new instance of discovery and initializing it with the agent's
+// configuration.
 func (a *Agent) setupMembership() error {
 	rpcAddr, err := a.Config.RPCAddr()
 	if err != nil {
@@ -173,6 +205,8 @@ func (a *Agent) setupMembership() error {
 	return err
 }
 
+// Shutdown function is responsible for shutting down the agent by closing
+// all the connections and shutting down the servers.
 func (a *Agent) Shutdown() error {
 	a.shutdownLock.Lock()
 	defer a.shutdownLock.Unlock()
