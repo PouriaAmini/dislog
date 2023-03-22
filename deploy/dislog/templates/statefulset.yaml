@@ -26,10 +26,10 @@ spec:
               cat > /var/run/dislog/config.yaml <<EOD
               data-dir: /var/run/dislog/data
               rpc-port: {{.Values.rpcPort}}
-              bind-addr: "$HOSTNAME.dislog.{{.Release.Namespace}}.\svc.cluster.local:{{.Values.serfPort}}"
+              bind-addr: "$HOSTNAME.dislog.{{.Release.Namespace}}.svc.cluster.local:{{.Values.serfPort}}"
               bootstrap: $([ $ID = 0 ] && echo true || echo false)
               $([ $ID != 0 ] && echo 'start-join-addrs: "dislog-0.dislog.{{.Release.Namespace}}.svc.cluster.local:{{.Values.serfPort}}"')
-              EOD   
+              EOD
           volumeMounts:
             - name: datadir
               mountPath: /var/run/dislog
