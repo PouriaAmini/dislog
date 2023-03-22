@@ -3,19 +3,19 @@ kind: StatefulSet
 metadata:
   name: {{ include "dislog.fullname" . }}
   namespace: {{ .Release.Namespace }}
-  labels: {{ include "disglog.labels" . | nindent 4 }}
+  labels: {{ include "dislog.labels" . | nindent 4 }}
 spec:
   selector:
-    matchLabels: {{ include "disglog.selectorLabels" . | nindent 6 }}
-  serviceName: {{ include "disglog.fullname" . }}
+    matchLabels: {{ include "dislog.selectorLabels" . | nindent 6 }}
+  serviceName: {{ include "dislog.fullname" . }}
   replicas: {{ .Values.replicas }}
   template:
     metadata:
-      name: {{ include "disglog.fullname" . }}
-      labels: {{ include "disglog.labels" . | nindent 8 }}
+      name: {{ include "dislog.fullname" . }}
+      labels: {{ include "dislog.labels" . | nindent 8 }}
     spec:
       initContainers:
-        - name: {{ include "disglog.fullname" . }}-config-init
+        - name: {{ include "dislog.fullname" . }}-config-init
           image: busybox
           imagePullPolicy: IfNotPresent
           command:
@@ -23,18 +23,18 @@ spec:
             - -c
             - |-
               ID=$(echo $HOSTNAME | rev | cut -d- -f1 | rev)
-              cat > /var/run/disglog/config.yaml <<EOD
-              data-dir: /var/run/disglog/data
+              cat > /var/run/dislog/config.yaml <<EOD
+              data-dir: /var/run/dislog/data
               rpc-port: {{.Values.rpcPort}}
-              bind-addr: "$HOSTNAME.disglog.{{.Release.Namespace}}.\svc.cluster.local:{{.Values.serfPort}}"
+              bind-addr: "$HOSTNAME.dislog.{{.Release.Namespace}}.\svc.cluster.local:{{.Values.serfPort}}"
               bootstrap: $([ $ID = 0 ] && echo true || echo false)
-              $([ $ID != 0 ] && echo 'start-join-addrs: "disglog-0.disglog.{{.Release.Namespace}}.svc.cluster.local:{{.Values.serfPort}}"')
+              $([ $ID != 0 ] && echo 'start-join-addrs: "dislog-0.dislog.{{.Release.Namespace}}.svc.cluster.local:{{.Values.serfPort}}"')
               EOD   
           volumeMounts:
             - name: datadir
-              mountPath: /var/run/disglog
+              mountPath: /var/run/dislog
       containers:
-        - name: {{ include "disglog.fullname" . }}
+        - name: {{ include "dislog.fullname" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           ports:
             - containerPort: {{ .Values.rpcPort }}
@@ -42,7 +42,7 @@ spec:
             - containerPort: {{ .Values.serfPort }}
               name: serf
           args:
-            - --config-file=/var/run/disglog/config.yaml
+            - --config-file=/var/run/dislog/config.yaml
           readinessProbe:
             exec:
               command: ["/bin/grpc_health_probe", "-addr=:{{ .Values.rpcPort }}"]
@@ -53,7 +53,7 @@ spec:
             initialDelaySeconds: 10
           volumeMounts:
             - name: datadir
-              mountPath: /var/run/disglog
+              mountPath: /var/run/dislog
   volumeClaimTemplates:
     - metadata:
         name: datadir

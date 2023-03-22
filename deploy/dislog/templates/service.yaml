@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "disglog.fullname" . }}
+  name: {{ include "dislog.fullname" . }}
   namespace: {{ .Release.Namespace }}
-  labels: {{ include "disglog.labels" . | nindent 4 }}
+  labels: {{ include "dislog.labels" . | nindent 4 }}
 spec:
   clusterIP: None
   publishNotReadyAddresses: true
@@ -19,4 +19,4 @@ spec:
       protocol: "UDP"
       port: {{ .Values.serfPort }}
       targetPort: {{ .Values.serfPort }}
-  selector: {{ include "disglog.selectorLabels" . | nindent 4 }}
+  selector: {{ include "dislog.selectorLabels" . | nindent 4 }}
