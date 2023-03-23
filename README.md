@@ -1,6 +1,6 @@
 # Dislog: Distributed Logging System
 
-<img width="150" alt="Screenshot 2023-03-22 at 9 43 27 PM" src="https://user-images.githubusercontent.com/64161548/227077938-c08c20bf-6122-4b7a-948d-0998a7809ef7.png">
+<img width="100" alt="Screenshot 2023-03-22 at 9 43 27 PM" src="https://user-images.githubusercontent.com/64161548/227077938-c08c20bf-6122-4b7a-948d-0998a7809ef7.png">
 
 ---
 
