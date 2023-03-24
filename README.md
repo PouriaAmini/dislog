@@ -8,6 +8,8 @@ Dislog is a distributed logging system implemented in Go. It is designed to be s
 and easy to use. It allows you to collect and store logs from multiple sources in real-time.
 Dislog is an open-source project and welcomes contributions from the community.
 
+Visit out [Dislog Docs] to learn about how Dislog is implemented.
+
 ---
 
 ## Running Dislog on Kubernetes
@@ -65,15 +67,11 @@ servers:
 - id:"dislog-2" rpc_addr:"dislog-2.dislog.default.svc.cluster.local:8400"
 ```
 
-See our documentation on [Dislog Docs] to run Dislog on the cloud.
-
-### Dislog Implementation
-
-Visit out [Dislog Docs] to learn about how Dislog is implemented.
+See our documentation on [GitHub Wiki](https://github.com/PouriaAmini/dislog/wiki/Deploy-Dislog-on-Google-Kubernetes-Engine) to run Dislog on the cloud.
 
 [Docker]: https://docs.docker.com/engine
 [Kubernetes]: https://kubernetes.io/
 [Kind]: https://kubernetes.io/docs/tasks/tools/#kind
 [kubectl]: https://kubernetes.io/docs/tasks/tools/#kubectl
 [Helm]: https://helm.sh/docs/intro/install/
-[Dislog Docs]: https://
+[Dislog Docs]: https://github.com/PouriaAmini/dislog/wiki/Dislog-Implementation-Details
