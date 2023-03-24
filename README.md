@@ -8,7 +8,7 @@ Dislog is a distributed logging system implemented in Go. It is designed to be s
 and easy to use. It allows you to collect and store logs from multiple sources in real-time.
 Dislog is an open-source project and welcomes contributions from the community.
 
-Visit out [Dislog Docs] to learn about how Dislog is implemented.
+Visit out [Dislog Wiki] to learn about how Dislog is implemented.
 
 ---
 
@@ -74,4 +74,4 @@ See our documentation on [GitHub Wiki](https://github.com/PouriaAmini/dislog/wik
 [Kind]: https://kubernetes.io/docs/tasks/tools/#kind
 [kubectl]: https://kubernetes.io/docs/tasks/tools/#kubectl
 [Helm]: https://helm.sh/docs/intro/install/
-[Dislog Docs]: https://github.com/PouriaAmini/dislog/wiki/Dislog-Implementation-Details
+[Dislog Wiki]: https://github.com/PouriaAmini/dislog/wiki/Dislog-Implementation-Details
