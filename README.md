@@ -8,7 +8,7 @@ Dislog is a distributed logging system implemented in Go. It is designed to be s
 and easy to use. It allows you to collect and store logs from multiple sources in real-time.
 Dislog is an open-source project and welcomes contributions from the community.
 
-Visit out [Dislog Wiki] to learn about how Dislog is implemented.
+Visit our [Dislog Wiki] to learn about how Dislog is implemented.
 
 ---
 
