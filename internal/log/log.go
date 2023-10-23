@@ -3,7 +3,6 @@
 package log
 
 import (
-	api "github.com/pouriaamini/proglog/api/v1"
 	"io"
 	"io/ioutil"
 	"os"
@@ -12,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	api "github.com/pouriaamini/proglog/api/v1"
 )
 
 // Log represents a durable, sequentially appended log of records.
@@ -92,14 +93,21 @@ func (l *Log) setup() error {
 //
 // Append returns the offset of the appended record and an error if any.
 func (l *Log) Append(record *api.Record) (uint64, error) {
+	highestOffset, err := l.HighestOffset()
+	if err != nil {
+		return 0, err
+	}
+	if l.activeSegment.IsMaxed() {
+		err = l.newSegment(highestOffset + 1)
+		if err != nil {
+			return 0, err
+		}
+	}
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	off, err := l.activeSegment.Append(record)
 	if err != nil {
 		return 0, err
-	}
-	if l.activeSegment.IsMaxed() {
-		err = l.newSegment(off + 1)
 	}
 	return off, err
 }
