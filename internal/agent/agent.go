@@ -7,11 +7,12 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"github.com/hashicorp/raft"
 	"io"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/hashicorp/raft"
 
 	"github.com/soheilhy/cmux"
 	"go.uber.org/zap"
@@ -108,15 +109,16 @@ func (a *Agent) setupLogger() error {
 
 // setupMux sets up the multiplexer for the agent.
 func (a *Agent) setupMux() error {
-	addr, err := net.ResolveTCPAddr("tcp", a.Config.BindAddr)
-	if err != nil {
-		return err
-	}
-	rpcAddr := fmt.Sprintf(
-		"%s:%d",
-		addr.IP.String(),
-		a.Config.RPCPort,
-	)
+	//addr, err := net.ResolveTCPAddr("tcp", a.Config.BindAddr)
+	//if err != nil {
+	//	return err
+	//}
+	//rpcAddr := fmt.Sprintf(
+	//	"%s:%d",
+	//	addr.IP.String(),
+	//	a.Config.RPCPort,
+	//)
+	rpcAddr := fmt.Sprintf(":%d", a.Config.RPCPort)
 	ln, err := net.Listen("tcp", rpcAddr)
 	if err != nil {
 		return err
@@ -150,6 +152,7 @@ func (a *Agent) setupLog() error {
 	logConfig.Raft.BindAddr = rpcAddr
 	logConfig.Raft.LocalID = raft.ServerID(a.Config.NodeName)
 	logConfig.Raft.Bootstrap = a.Config.Bootstrap
+	logConfig.Raft.CommitTimeout = 1000 * time.Millisecond
 	a.log, err = log.NewDistributedLog(
 		a.Config.DataDir,
 		logConfig,

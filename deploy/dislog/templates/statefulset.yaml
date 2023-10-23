@@ -7,7 +7,7 @@ metadata:
   {{ if .Values.service.lb }}
   annotations:
     service-per-pod-label: "statefulset.kubernetes.io/pod-name"
-    service-per-pod-ports: "{{.Values.rpcPort}}:{{.Values.rpcPort}}"
+    service-per-pod-ports: "{{ .Values.rpcPort }}:{{ .Values.rpcPort }}"
   {{ end }}
 spec:
   selector:
@@ -50,11 +50,19 @@ spec:
             - --config-file=/var/run/dislog/config.yaml
           readinessProbe:
             exec:
-              command: ["/bin/grpc_health_probe", "-addr=:{{ .Values.rpcPort }}"]
+              command:
+              - /bin/sh
+              - -c
+              - |-
+                /bin/grpc_health_probe -addr=$HOSTNAME.dislog.{{.Release.Namespace}}.svc.cluster.local:{{.Values.rpcPort}}
             initialDelaySeconds: 10
           livenessProbe:
             exec:
-              command: ["/bin/grpc_health_probe", "-addr=:{{ .Values.rpcPort }}"]
+              command:
+              - /bin/sh
+              - -c
+              - |-
+                /bin/grpc_health_probe -addr=$HOSTNAME.dislog.{{.Release.Namespace}}.svc.cluster.local:{{.Values.rpcPort}}
             initialDelaySeconds: 10
           volumeMounts:
             - name: datadir

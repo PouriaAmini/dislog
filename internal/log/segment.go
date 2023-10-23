@@ -2,10 +2,12 @@ package log
 
 import (
 	"fmt"
-	api "github.com/pouriaamini/proglog/api/v1"
-	"google.golang.org/protobuf/proto"
 	"os"
 	"path"
+
+	"google.golang.org/protobuf/proto"
+
+	api "github.com/pouriaamini/proglog/api/v1"
 )
 
 // A Segment represents a single storage unit in the log.
@@ -112,7 +114,8 @@ func (s *segment) Read(off uint64) (*api.Record, error) {
 // file has reached its maximum size, and false otherwise.
 func (s *segment) IsMaxed() bool {
 	return s.store.size >= s.config.Segment.MaxStoreBytes ||
-		s.index.size >= s.config.Segment.MaxIndexBytes
+		s.index.size >= s.config.Segment.MaxIndexBytes ||
+		s.index.IsMaxed()
 }
 
 // Remove closes the segment and removes its associated store and index files.
