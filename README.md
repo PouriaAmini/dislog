@@ -1,68 +1,77 @@
-# Dislog
-A Distributed Logging System implemented in Go
+# Dislog: Distributed Logging System
 
-## The Log Is a Powerful Tool
-Folks who develop storage engines of filesystems and databases use logs to improve the data 
-integrity of their systems. The ext filesystems, for example, log changes to a journal 
-instead of directly changing the disk’s data file. Once the filesystem has safely written 
-the changes to the journal, it then applies those changes to the data files. 
-Logging to the journal is simple and fast, so there’s little chance of losing data. Even 
-if your computer crashed before ext had finished updating the disk files, then on the next 
-boot, the filesystem would process the data in the journal to complete its updates. Database 
-developers, like PostgreSQL, use the same technique to make their systems durable: they 
-record changes to a log, called a write-ahead log (WAL), and later process the WAL to apply 
-the changes to their database’s data files.
+<img width="100" alt="Screenshot 2023-03-22 at 9 43 27 PM" src="https://user-images.githubusercontent.com/64161548/227077938-c08c20bf-6122-4b7a-948d-0998a7809ef7.png">
 
-Database developers use the WAL for replication, too. Instead of writing the logs to a disk, 
-they write the logs over the network to its replicas. The replicas apply the changes to their 
-own data copies, and eventually they all end up at the same state. Raft, a consensus algorithm, 
-uses the same idea to get distributed services to agree on a cluster-wide state. Each node in a 
-Raft cluster runs a state machine with a log as its input. The leader of the Raft cluster 
-appends changes to its followers’ logs. Since the state machines use the logs as input and 
-because the logs have the same records in the same order, all the services end up with the same state.
+---
 
-Web front-end developers use logs to help manage state in their applications. In Redux, a popular 
-JavaScript library commonly used with React, you log changes as plain objects and handle those 
-changes with pure functions that apply the updates to your application’s state.
+Dislog is a distributed logging system implemented in Go. It is designed to be scalable, fault-tolerant,
+and easy to use. It allows you to collect and store logs from multiple sources in real-time.
+Dislog is an open-source project and welcomes contributions from the community.
 
-All these examples use logs to store, share, and process ordered data. This is really cool because 
-the same tool helps replicate databases, coordinate distributed services, and manage state in 
-front-end applications. You can solve a lot of problems, especially in distributed services, 
-by breaking down the changes in your system until they’re single, atomic operations that you 
-can store, share, and process with a log.
+Visit our [Dislog Wiki] to learn about how Dislog is implemented.
 
-## How Dislog Is Implemented
-Dislog is a distributed segment-based system which implements log, an append-only sequence of records, 
-no matter the format (e.g. it can be binary or human readable text). When you append a record to a log, 
-the log assigns the record a unique and sequential offset number that acts like the ID for that record. 
-A log is like a table that always orders the records by time and indexes each record by its offset and 
-time created.
+---
 
-Concrete implementations of logs have to deal with us not having disks with infinite space, which means 
-we can’t append to the same file forever. So the log is split into a list of segments. When the log 
-grows too big, disk space is freed up by deleting old segments whose data we’ve already processed or 
-archived. This cleaning up of old segments can run in a background process while our service can still 
-produce to the active (newest) segment and consume from other segments with no, or at least fewer, 
-conflicts where goroutines access the same data.
+## Running Dislog on Kubernetes
 
-There’s always one special segment among the list of segments, and that’s the active segment. We call 
-it the active segment because it’s the only segment we actively write to. When we’ve filled the active 
-segment, we create a new segment and make it the active segment.
+This is a guide on how to run Dislog implemented in Kubernetes locally using 
+Kind. 
+The system consists of several components managed by Helm that are deployed as 
+Kubernetes resources using Helm charts.
 
-Each segment comprises a store file and an index file. The segment’s store file is where we store the 
-record data; we continually append records to this file. The segment’s index file is where we index 
-each record in the store file. The index file speeds up reads because it maps record offsets to their 
-position in the store file. Reading a record given its offset is a two-step process: first you get the 
-entry from the index file for the record, which tells you the position of the record in the store file, 
-and then you read the record at that position in the store file. Since the index file requires only two 
-small fields—the offset and stored position of the record—the index file is much smaller than the store 
-file that stores all your record data. Index files are small enough that we can memory-map them and 
-make operations on the file as fast as operat- ing on in-memory data.
+### Prerequisites:
 
-The following terminalogies are used through out the project for consistancy:
-- Record—the data stored in our log.
-- Store—the file we store records in.
-- Index—the file we store index entries in.
-- Segment—the abstraction that ties a store and an index together. 
-- Log—the abstraction that ties all the segments together.
+Before proceeding with the deployment, make sure that you have the following 
+prerequisites:
 
+- [Docker] installed on your local machine
+- A running [Kubernetes] cluster on [Kind]
+- [kubectl] command-line tool
+- [Helm] installed on your local machine
+
+### Installation
+
+1. Clone or download the repository
+    ```
+    git clone https://github.com/pouriaamini/dislog
+    ```
+2. Create a Kind cluster on your local machine
+    ```
+    kind create cluster
+    ```
+3. Build the Docker image for dislog and load it into your Kind cluster
+    ```
+    make build-docker
+    kind load docker-image github.com/pouriaamini/dislog:0.0.1
+    ```
+4. Install the Helm Chart for the system
+    ```
+    helm install dislog deploy/dislog
+    ```
+5. The current setup fires up three pods. You can list them by running 
+`kubectl get pods`. When all three pods are ready, we can try requesting the API
+    ```
+    kubectl port-forward pod/dislog-0 8400 8400
+    ```
+   
+### Verify the Setup
+Run the command to request our service to get and print the list of servers
+```
+go run cmd/getservers/main.go
+```
+You should get the following output
+```
+servers:
+- id:"dislog-0" rpc_addr:"dislog-0.dislog.default.svc.cluster.local:8400"
+- id:"dislog-1" rpc_addr:"dislog-1.dislog.default.svc.cluster.local:8400"
+- id:"dislog-2" rpc_addr:"dislog-2.dislog.default.svc.cluster.local:8400"
+```
+
+See our documentation on [GitHub Wiki](https://github.com/PouriaAmini/dislog/wiki/Deploy-Dislog-on-Google-Kubernetes-Engine) to run Dislog on the cloud.
+
+[Docker]: https://docs.docker.com/engine
+[Kubernetes]: https://kubernetes.io/
+[Kind]: https://kubernetes.io/docs/tasks/tools/#kind
+[kubectl]: https://kubernetes.io/docs/tasks/tools/#kubectl
+[Helm]: https://helm.sh/docs/intro/install/
+[Dislog Wiki]: https://github.com/PouriaAmini/dislog/wiki/Dislog-Implementation-Details
