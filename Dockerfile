@@ -13,11 +13,11 @@ RUN CGO_ENABLED=0 go build -o /go/bin/dislog ./cmd/dislog
 # Install the grpc_health_probe executable in the image
 RUN GRPC_HEALTH_PROBE_VERSION=v0.4.17 && \
     wget -qO/go/bin/grpc_health_probe \
-    https://github.com/grpc-ecosystem/grpc-health-probe/releases/tag/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
+    https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
     chmod +x /go/bin/grpc_health_probe
 
 # Use a scratch image as the base image to create a minimal container image
-FROM scratch
+FROM golang:1.17-alpine
 
 # Copy the binary from the build image to the new image
 COPY --from=build /go/bin/dislog /bin/dislog
